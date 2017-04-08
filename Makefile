@@ -25,11 +25,9 @@ LS = ls
 PACKIHX = packihx
 TAIL = tail
 STTY = stty
-# Configuration of serial port to work with Arduino
-STTYOPTIONS = 10:0:18b1:0:3:1c:7f:15:4:0:0:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0
-TTYPORT = /dev/ttyACM0
-# Location of programmer.pl script to use with the Arduino programmer sketch
-PROGRAMMER = ~/projects/arduino/sketches/nRF24LE1/Programmer/Programmer/Programmer.pl
+
+PROGRAMMER = ../nrf24le1_flasher/nrf24le1_flasher
+IP = ../nrf24le1_flasher/ip_bkp.img
 
 # Programs to use for creating dependencies, compiling source files, and creating the library file, respectively
 DEP = sdcc
@@ -120,4 +118,5 @@ clean:
 	$(if $(DEPDIR),$(RM) -rf $(DEPDIR)/*)
 	$(if $(FLASHDIR),$(RM) -rf $(FLASHDIR)/*)
 
-
+flash: all
+	$(PROGRAMMER) --erase-all --write-flash $(MAINHEX) --write-ip $(IP)
