@@ -80,6 +80,8 @@ void main(){
 	uint16_t count = 0;
 	uint8_t battery = 0;
 	uint8_t data[5] = {ONE_BUTTON, 0, 0, 0, 1}; //device type, id, battery, eventdata
+	bool pressed = false;
+	bool previousValue = false;
 
 	init();
 #ifdef RECEIVER
@@ -98,21 +100,31 @@ void main(){
 #endif
 #ifdef SENDER
 	while(1){
-		data[2] = adc_start_single_conversion_get_value(ADC_CHANNEL_1_THIRD_VDD) >> 8;
-		data[3]++;
-		 
-		rf_write_tx_payload(data, 5, true);
-    while(!(rf_irq_pin_active() && rf_irq_tx_ds_active()));
+		pressed = gpio_pin_val_read(GPIO_PIN_ID_P1_5);
+	  //printf("pressed %d ", pressed);
 
-		gpio_pin_val_set(GPIO_PIN_ID_P1_4);
-		delay_ms(30); 
-		gpio_pin_val_clear(GPIO_PIN_ID_P1_4);
-		delay_ms(30); 
+		if (pressed != previousValue){
+			data[2] = adc_start_single_conversion_get_value(ADC_CHANNEL_1_THIRD_VDD) >> 8;
+			data[4] = pressed;
 
-    rf_irq_clear_all();
-		rf_power_down();
-	  pwr_clk_mgmt_enter_pwr_mode_register_ret(); //enter register retention mode for power savings
-		rf_power_up(true);
+			rf_write_tx_payload(data, 5, true);
+			while(!(rf_irq_pin_active() && rf_irq_tx_ds_active()));
+
+			// gpio_pin_val_set(GPIO_PIN_ID_P1_4);
+			// delay_ms(5); 
+			// gpio_pin_val_clear(GPIO_PIN_ID_P1_4);
+			// delay_ms(5); 
+			rf_irq_clear_all();
+			previousValue = pressed;
+		}else if(!pressed){
+			previousValue = false;
+			data[3]++;
+			rf_power_down();
+			pwr_clk_mgmt_enter_pwr_mode_register_ret(); //enter register retention mode for power savings
+			rf_power_up(true);
+		}
+
+
 	}	 
 #endif
 }
